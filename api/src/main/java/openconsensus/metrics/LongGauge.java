@@ -28,11 +28,12 @@ import javax.annotation.concurrent.ThreadSafe;
  * <pre>{@code
  * class YourClass {
  *
- *   private static final MetricCollection metricRegistry = Metrics.getMetricRegistry();
+ *   private static final MetricCollection metricCollection =
+ *       Metrics.getMeter().createMetricsCollection().build();
  *
  *   List<LabelKey> labelKeys = Arrays.asList(LabelKey.create("Name", "desc"));
  *
- *   LongGauge gauge = metricRegistry.addLongGauge("queue_size", "Pending jobs", "1", labelKeys);
+ *   LongGauge gauge = metricCollection.addLongGauge("queue_size", "Pending jobs", "1", labelKeys);
  *
  *   // It is recommended to keep a reference of a point for manual operations.
  *   LongPoint defaultPoint = gauge.getDefaultTimeSeries();
@@ -50,12 +51,13 @@ import javax.annotation.concurrent.ThreadSafe;
  * <pre>{@code
  * class YourClass {
  *
- *   private static final MetricCollection metricRegistry = Metrics.getMetricRegistry();
+ *   private static final MetricCollection metricCollection =
+ *       Metrics.getMeter().createMetricsCollection().build();
  *
  *   List<LabelKey> labelKeys = Arrays.asList(LabelKey.create("Name", "desc"));
  *   List<LabelValue> labelValues = Arrays.asList(LabelValue.create("Inbound"));
  *
- *   LongGauge gauge = metricRegistry.addLongGauge("queue_size", "Pending jobs", "1", labelKeys);
+ *   LongGauge gauge = metricCollection.addLongGauge("queue_size", "Pending jobs", "1", labelKeys);
  *
  *   // It is recommended to keep a reference of a point for manual operations.
  *   LongPoint inboundPoint = gauge.getOrCreateTimeSeries(labelValues);

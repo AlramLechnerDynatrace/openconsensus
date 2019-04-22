@@ -28,11 +28,12 @@ import javax.annotation.concurrent.ThreadSafe;
  * <pre>{@code
  * class YourClass {
  *
- *   private static final MetricCollection metricRegistry = Metrics.getMetricRegistry();
+ *   private static final MetricCollection metricCollection =
+ *       Metrics.getMeter().createMetricsCollection().build();
  *
  *   List<LabelKey> labelKeys = Arrays.asList(LabelKey.create("Name", "desc"));
  *
- *   DoubleGauge gauge = metricRegistry.addDoubleGauge("queue_size",
+ *   DoubleGauge gauge = metricCollection.addDoubleGauge("queue_size",
  *                       "Pending jobs", "1", labelKeys);
  *
  *   // It is recommended to keep a reference of a point for manual operations.
@@ -51,12 +52,13 @@ import javax.annotation.concurrent.ThreadSafe;
  * <pre>{@code
  * class YourClass {
  *
- *   private static final MetricCollection metricRegistry = Metrics.getMetricRegistry();
+ *   private static final MetricCollection metricCollection =
+ *       Metrics.getMeter().createMetricsCollection().build();
  *
  *   List<LabelKey> labelKeys = Arrays.asList(LabelKey.create("Name", "desc"));
  *   List<LabelValue> labelValues = Arrays.asList(LabelValue.create("Inbound"));
  *
- *   DoubleGauge gauge = metricRegistry.addDoubleGauge("queue_size",
+ *   DoubleGauge gauge = metricCollection.addDoubleGauge("queue_size",
  *                       "Pending jobs", "1", labelKeys);
  *
  *   // It is recommended to keep a reference of a point for manual operations.

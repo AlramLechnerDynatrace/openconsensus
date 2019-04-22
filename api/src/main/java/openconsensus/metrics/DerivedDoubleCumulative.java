@@ -29,12 +29,13 @@ import javax.annotation.concurrent.ThreadSafe;
  * <pre>{@code
  * class YourClass {
  *
- *   private static final MetricRegistry metricRegistry = Metrics.getMetricRegistry();
+ *   private static final MetricCollection metricCollection =
+ *       Metrics.getMeter().createMetricsCollection().build();
  *
  *   List<LabelKey> labelKeys = Arrays.asList(LabelKey.create("Name", "desc"));
  *   List<LabelValue> labelValues = Arrays.asList(LabelValue.create("Inbound"));
  *
- *   DerivedDoubleCumulative cumulative = metricRegistry.addDerivedDoubleCumulative(
+ *   DerivedDoubleCumulative cumulative = metricCollection.addDerivedDoubleCumulative(
  *       "processed_jobs", "Processed jobs in a queue", "1", labelKeys);
  *
  *   QueueManager queueManager = new QueueManager();

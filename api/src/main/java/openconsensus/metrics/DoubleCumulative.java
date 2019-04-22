@@ -28,11 +28,12 @@ import javax.annotation.concurrent.ThreadSafe;
  * <pre>{@code
  * class YourClass {
  *
- *   private static final MetricRegistry metricRegistry = Metrics.getMetricRegistry();
+ *   private static final MetricCollection metricCollection =
+ *       Metrics.getMeter().createMetricsCollection().build();
  *
  *   List<LabelKey> labelKeys = Arrays.asList(LabelKey.create("Name", "desc"));
  *
- *   DoubleCumulative cumulative = metricRegistry.addDoubleCumulative("processed_jobs",
+ *   DoubleCumulative cumulative = metricCollection.addDoubleCumulative("processed_jobs",
  *                       "Processed jobs", "1", labelKeys);
  *
  *   // It is recommended to keep a reference of a point for manual operations.
@@ -51,12 +52,13 @@ import javax.annotation.concurrent.ThreadSafe;
  * <pre>{@code
  * class YourClass {
  *
- *   private static final MetricRegistry metricRegistry = Metrics.getMetricRegistry();
+ *   private static final MetricCollection metricCollection =
+ *       Metrics.getMeter().createMetricsCollection().build();
  *
  *   List<LabelKey> labelKeys = Arrays.asList(LabelKey.create("Name", "desc"));
  *   List<LabelValue> labelValues = Arrays.asList(LabelValue.create("Inbound"));
  *
- *   DoubleCumulative cumulative = metricRegistry.addDoubleCumulative("processed_jobs",
+ *   DoubleCumulative cumulative = metricCollection.addDoubleCumulative("processed_jobs",
  *                       "Processed jobs", "1", labelKeys);
  *
  *   // It is recommended to keep a reference of a point for manual operations.
