@@ -84,7 +84,7 @@ public abstract class DoubleCumulative {
    * method for manual operations.
    *
    * @param labelValues the list of label values. The number of label values must be the same to
-   *     that of the label keys passed to {@link MetricRegistry#addDoubleCumulative}.
+   *     that of the label keys passed to {@link MetricCollection#addDoubleCumulative}.
    * @return a {@code DoublePoint} the value of single cumulative.
    * @throws NullPointerException if {@code labelValues} is null OR any element of {@code
    *     labelValues} is null.
