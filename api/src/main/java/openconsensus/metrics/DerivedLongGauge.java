@@ -19,7 +19,6 @@ package openconsensus.metrics;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import javax.annotation.concurrent.ThreadSafe;
-import openconsensus.common.ToLongFunction;
 
 /**
  * Derived Long Gauge metric, to report instantaneous measurement of an int64 value. Gauges can go
@@ -30,7 +29,8 @@ import openconsensus.common.ToLongFunction;
  * <pre>{@code
  * class YourClass {
  *
- *   private static final MetricRegistry metricRegistry = Metrics.getMetricRegistry();
+ *   private static final Meter meter = Metrics.getMeter();
+ *   private static final MetricRegistry metricRegistry = meter.metricRegistryBuilder().build();
  *
  *   List<LabelKey> labelKeys = Arrays.asList(LabelKey.create("Name", "desc"));
  *   List<LabelValue> labelValues = Arrays.asList(LabelValue.create("Inbound"));
@@ -57,7 +57,7 @@ import openconsensus.common.ToLongFunction;
  * @since 0.1.0
  */
 @ThreadSafe
-public abstract class DerivedLongGauge {
+public interface DerivedLongGauge extends Metric {
   /**
    * Creates a {@code TimeSeries}. The value of a single point in the TimeSeries is observed from a
    * callback function. This function is invoked whenever metrics are collected, meaning the
@@ -74,22 +74,8 @@ public abstract class DerivedLongGauge {
    *     OR if number of {@code labelValues}s are not equal to the label keys.
    * @since 0.1.0
    */
-  public abstract <T> void createTimeSeries(
-      List<LabelValue> labelValues, T obj, ToLongFunction<T> function);
+  <T> void createTimeSeries(List<LabelValue> labelValues, T obj, ToLongFunction<T> function);
 
-  /**
-   * Removes the {@code TimeSeries} from the gauge metric, if it is present.
-   *
-   * @param labelValues the list of label values.
-   * @throws NullPointerException if {@code labelValues} is null.
-   * @since 0.1.0
-   */
-  public abstract void removeTimeSeries(List<LabelValue> labelValues);
-
-  /**
-   * Removes all {@code TimeSeries} from the gauge metric.
-   *
-   * @since 0.1.0
-   */
-  public abstract void clear();
+  /** Builder class for {@link DerivedLongGauge}. */
+  interface Builder extends Metric.Builder<Builder, DerivedLongGauge> {}
 }

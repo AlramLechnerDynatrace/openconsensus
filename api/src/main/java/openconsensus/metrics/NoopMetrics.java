@@ -17,9 +17,9 @@
 package openconsensus.metrics;
 
 import java.util.List;
-import openconsensus.common.ToDoubleFunction;
-import openconsensus.common.ToLongFunction;
+import java.util.Map;
 import openconsensus.internal.Utils;
+import openconsensus.resource.Resource;
 
 /**
  * No-op implementations of metrics classes.
@@ -30,96 +30,114 @@ public final class NoopMetrics {
   private NoopMetrics() {}
 
   /**
-   * Returns an instance that is a no-op implementations for {@link MetricRegistry}.
+   * Returns an instance that is a no-op implementations for {@link Meter}.
    *
-   * @return an instance that is a no-op implementations for {@link MetricRegistry}
+   * @return an instance that is a no-op implementations for {@link Meter}
    * @since 0.1.0
    */
-  public static MetricRegistry newNoopMetricRegistry() {
-    return new NoopMetricRegistry();
+  public static Meter newNoopMeter() {
+    return new NoopMeter();
   }
 
-  private static final class NoopMetricRegistry extends MetricRegistry {
+  private static final class NoopMeter implements Meter {
+
     @Override
-    public LongGauge addLongGauge(String name, MetricOptions options) {
-      return NoopLongGauge.create(
-          Utils.checkNotNull(name, "name"),
-          options.getDescription(),
-          options.getUnit(),
-          options.getLabelKeys());
+    public MetricRegistry.Builder metricRegistryBuilder() {
+      return new NoopMetricCollection.Builder();
+    }
+  }
+
+  private static final class NoopMetricCollection implements MetricRegistry {
+    @Override
+    public LongGauge.Builder longGaugeBuilder(String name) {
+      Utils.checkNotNull(name, "name");
+      return new NoopLongGauge.NoopBuilder();
     }
 
     @Override
-    public DoubleGauge addDoubleGauge(String name, MetricOptions options) {
-      return NoopDoubleGauge.create(
-          Utils.checkNotNull(name, "name"),
-          options.getDescription(),
-          options.getUnit(),
-          options.getLabelKeys());
+    public DoubleGauge.Builder doubleGaugeBuilder(String name) {
+      Utils.checkNotNull(name, "name");
+      return new NoopDoubleGauge.NoopBuilder();
     }
 
     @Override
-    public DerivedLongGauge addDerivedLongGauge(String name, MetricOptions options) {
-      return NoopDerivedLongGauge.create(
-          Utils.checkNotNull(name, "name"),
-          options.getDescription(),
-          options.getUnit(),
-          options.getLabelKeys());
+    public DerivedLongGauge.Builder derivedLongGaugeBuilder(String name) {
+      Utils.checkNotNull(name, "name");
+      return new NoopDerivedLongGauge.NoopBuilder();
     }
 
     @Override
-    public DerivedDoubleGauge addDerivedDoubleGauge(String name, MetricOptions options) {
-      return NoopDerivedDoubleGauge.create(
-          Utils.checkNotNull(name, "name"),
-          options.getDescription(),
-          options.getUnit(),
-          options.getLabelKeys());
+    public DerivedDoubleGauge.Builder derivedDoubleGaugeBuilder(String name) {
+      Utils.checkNotNull(name, "name");
+      return new NoopDerivedDoubleGauge.NoopBuilder();
     }
 
     @Override
-    public DoubleCumulative addDoubleCumulative(String name, MetricOptions options) {
-      return NoopDoubleCumulative.create(
-          Utils.checkNotNull(name, "name"),
-          options.getDescription(),
-          options.getUnit(),
-          options.getLabelKeys());
+    public DoubleCumulative.Builder doubleCumulativeBuilder(String name) {
+      Utils.checkNotNull(name, "name");
+      return new NoopDoubleCumulative.NoopBuilder();
     }
 
     @Override
-    public DerivedDoubleCumulative addDerivedDoubleCumulative(String name, MetricOptions options) {
-      return NoopDerivedDoubleCumulative.create(
-          Utils.checkNotNull(name, "name"),
-          options.getDescription(),
-          options.getUnit(),
-          options.getLabelKeys());
+    public DerivedDoubleCumulative.Builder derivedDoubleCumulativeBuilder(String name) {
+      Utils.checkNotNull(name, "name");
+      return new NoopDerivedDoubleCumulative.NoopBuilder();
+    }
+
+    @Override
+    public LongCumulative.Builder longCumulativeBuilder(String name) {
+      Utils.checkNotNull(name, "name");
+      return new NoopLongCumulative.NoopBuilder();
+    }
+
+    @Override
+    public DerivedLongCumulative.Builder derivedLongCumulativeBuilder(String name) {
+      Utils.checkNotNull(name, "name");
+      return new NoopDerivedLongCumulative.NoopBuilder();
+    }
+
+    private static final class Builder implements MetricRegistry.Builder {
+      private static final MetricRegistry METRIC_COLLECTION = new NoopMetricCollection();
+
+      @Override
+      public MetricRegistry.Builder setComponent(String component) {
+        Utils.checkNotNull(component, "component");
+        return this;
+      }
+
+      @Override
+      public MetricRegistry.Builder setResource(Resource resource) {
+        Utils.checkNotNull(resource, "resource");
+        return this;
+      }
+
+      @Override
+      public MetricRegistry build() {
+        return METRIC_COLLECTION;
+      }
     }
   }
 
   /** No-op implementations of LongGauge class. */
-  private static final class NoopLongGauge extends LongGauge {
+  private static final class NoopLongGauge implements LongGauge {
     private final int labelKeysSize;
 
-    static NoopLongGauge create(
-        String name, String description, String unit, List<LabelKey> labelKeys) {
-      return new NoopLongGauge(name, description, unit, labelKeys);
-    }
-
-    /** Creates a new {@code NoopLongPoint}. */
-    NoopLongGauge(String name, String description, String unit, List<LabelKey> labelKeys) {
-      labelKeysSize = labelKeys.size();
+    /** Creates a new {@code NoopTimeSeries}. */
+    private NoopLongGauge(int labelKeysSize) {
+      this.labelKeysSize = labelKeysSize;
     }
 
     @Override
-    public NoopLongPoint getOrCreateTimeSeries(List<LabelValue> labelValues) {
+    public NoopTimeSeries getOrCreateTimeSeries(List<LabelValue> labelValues) {
       Utils.checkListElementNotNull(Utils.checkNotNull(labelValues, "labelValues"), "labelValue");
       Utils.checkArgument(
           labelKeysSize == labelValues.size(), "Label Keys and Label Values don't have same size.");
-      return new NoopLongPoint();
+      return new NoopTimeSeries();
     }
 
     @Override
-    public NoopLongPoint getDefaultTimeSeries() {
-      return new NoopLongPoint();
+    public NoopTimeSeries getDefaultTimeSeries() {
+      return new NoopTimeSeries();
     }
 
     @Override
@@ -130,9 +148,9 @@ public final class NoopMetrics {
     @Override
     public void clear() {}
 
-    /** No-op implementations of LongPoint class. */
-    private static final class NoopLongPoint extends LongPoint {
-      private NoopLongPoint() {}
+    /** No-op implementations of TimeSeries class. */
+    private static final class NoopTimeSeries implements TimeSeries {
+      private NoopTimeSeries() {}
 
       @Override
       public void add(long amt) {}
@@ -140,37 +158,63 @@ public final class NoopMetrics {
       @Override
       public void set(long val) {}
     }
+
+    private static final class NoopBuilder implements LongGauge.Builder {
+      private int labelKeysSize = 0;
+
+      @Override
+      public Builder setDescription(String description) {
+        Utils.checkNotNull(description, "description");
+        return this;
+      }
+
+      @Override
+      public Builder setUnit(String unit) {
+        Utils.checkNotNull(unit, "unit");
+        return this;
+      }
+
+      @Override
+      public Builder setLabelKeys(List<LabelKey> labelKeys) {
+        Utils.checkListElementNotNull(Utils.checkNotNull(labelKeys, "labelKeys"), "labelKey");
+        labelKeysSize = labelKeys.size();
+        return this;
+      }
+
+      @Override
+      public Builder setConstantLabels(Map<LabelKey, LabelValue> constantLabels) {
+        Utils.checkMapElementNotNull(
+            Utils.checkNotNull(constantLabels, "constantLabels"), "constantLabel");
+        return this;
+      }
+
+      @Override
+      public LongGauge build() {
+        return new NoopLongGauge(labelKeysSize);
+      }
+    }
   }
 
   /** No-op implementations of DoubleGauge class. */
-  private static final class NoopDoubleGauge extends DoubleGauge {
+  private static final class NoopDoubleGauge implements DoubleGauge {
     private final int labelKeysSize;
 
-    static NoopDoubleGauge create(
-        String name, String description, String unit, List<LabelKey> labelKeys) {
-      return new NoopDoubleGauge(name, description, unit, labelKeys);
-    }
-
-    /** Creates a new {@code NoopDoublePoint}. */
-    NoopDoubleGauge(String name, String description, String unit, List<LabelKey> labelKeys) {
-      Utils.checkNotNull(name, "name");
-      Utils.checkNotNull(description, "description");
-      Utils.checkNotNull(unit, "unit");
-      Utils.checkListElementNotNull(Utils.checkNotNull(labelKeys, "labelKeys"), "labelKey");
-      labelKeysSize = labelKeys.size();
+    /** Creates a new {@code NoopTimeSeries}. */
+    private NoopDoubleGauge(int labelKeysSize) {
+      this.labelKeysSize = labelKeysSize;
     }
 
     @Override
-    public NoopDoublePoint getOrCreateTimeSeries(List<LabelValue> labelValues) {
+    public NoopTimeSeries getOrCreateTimeSeries(List<LabelValue> labelValues) {
       Utils.checkListElementNotNull(Utils.checkNotNull(labelValues, "labelValues"), "labelValue");
       Utils.checkArgument(
           labelKeysSize == labelValues.size(), "Label Keys and Label Values don't have same size.");
-      return new NoopDoublePoint();
+      return new NoopTimeSeries();
     }
 
     @Override
-    public NoopDoublePoint getDefaultTimeSeries() {
-      return new NoopDoublePoint();
+    public NoopTimeSeries getDefaultTimeSeries() {
+      return new NoopTimeSeries();
     }
 
     @Override
@@ -181,9 +225,9 @@ public final class NoopMetrics {
     @Override
     public void clear() {}
 
-    /** No-op implementations of DoublePoint class. */
-    private static final class NoopDoublePoint extends DoublePoint {
-      private NoopDoublePoint() {}
+    /** No-op implementations of TimeSeries class. */
+    private static final class NoopTimeSeries implements TimeSeries {
+      private NoopTimeSeries() {}
 
       @Override
       public void add(double amt) {}
@@ -191,24 +235,50 @@ public final class NoopMetrics {
       @Override
       public void set(double val) {}
     }
+
+    private static final class NoopBuilder implements DoubleGauge.Builder {
+      private int labelKeysSize = 0;
+
+      @Override
+      public Builder setDescription(String description) {
+        Utils.checkNotNull(description, "description");
+        return this;
+      }
+
+      @Override
+      public Builder setUnit(String unit) {
+        Utils.checkNotNull(unit, "unit");
+        return this;
+      }
+
+      @Override
+      public Builder setLabelKeys(List<LabelKey> labelKeys) {
+        Utils.checkListElementNotNull(Utils.checkNotNull(labelKeys, "labelKeys"), "labelKey");
+        labelKeysSize = labelKeys.size();
+        return this;
+      }
+
+      @Override
+      public Builder setConstantLabels(Map<LabelKey, LabelValue> constantLabels) {
+        Utils.checkMapElementNotNull(
+            Utils.checkNotNull(constantLabels, "constantLabels"), "constantLabel");
+        return this;
+      }
+
+      @Override
+      public DoubleGauge build() {
+        return new NoopDoubleGauge(labelKeysSize);
+      }
+    }
   }
 
   /** No-op implementations of DerivedLongGauge class. */
-  private static final class NoopDerivedLongGauge extends DerivedLongGauge {
+  private static final class NoopDerivedLongGauge implements DerivedLongGauge {
     private final int labelKeysSize;
 
-    static NoopDerivedLongGauge create(
-        String name, String description, String unit, List<LabelKey> labelKeys) {
-      return new NoopDerivedLongGauge(name, description, unit, labelKeys);
-    }
-
     /** Creates a new {@code NoopDerivedLongGauge}. */
-    NoopDerivedLongGauge(String name, String description, String unit, List<LabelKey> labelKeys) {
-      Utils.checkNotNull(name, "name");
-      Utils.checkNotNull(description, "description");
-      Utils.checkNotNull(unit, "unit");
-      Utils.checkListElementNotNull(Utils.checkNotNull(labelKeys, "labelKeys"), "labelKey");
-      labelKeysSize = labelKeys.size();
+    NoopDerivedLongGauge(int labelKeysSize) {
+      this.labelKeysSize = labelKeysSize;
     }
 
     @Override
@@ -227,24 +297,50 @@ public final class NoopMetrics {
 
     @Override
     public void clear() {}
+
+    private static final class NoopBuilder implements DerivedLongGauge.Builder {
+      private int labelKeysSize = 0;
+
+      @Override
+      public Builder setDescription(String description) {
+        Utils.checkNotNull(description, "description");
+        return this;
+      }
+
+      @Override
+      public Builder setUnit(String unit) {
+        Utils.checkNotNull(unit, "unit");
+        return this;
+      }
+
+      @Override
+      public Builder setLabelKeys(List<LabelKey> labelKeys) {
+        Utils.checkListElementNotNull(Utils.checkNotNull(labelKeys, "labelKeys"), "labelKey");
+        labelKeysSize = labelKeys.size();
+        return this;
+      }
+
+      @Override
+      public Builder setConstantLabels(Map<LabelKey, LabelValue> constantLabels) {
+        Utils.checkMapElementNotNull(
+            Utils.checkNotNull(constantLabels, "constantLabels"), "constantLabel");
+        return this;
+      }
+
+      @Override
+      public DerivedLongGauge build() {
+        return new NoopDerivedLongGauge(labelKeysSize);
+      }
+    }
   }
 
   /** No-op implementations of DerivedDoubleGauge class. */
-  private static final class NoopDerivedDoubleGauge extends DerivedDoubleGauge {
+  private static final class NoopDerivedDoubleGauge implements DerivedDoubleGauge {
     private final int labelKeysSize;
 
-    static NoopDerivedDoubleGauge create(
-        String name, String description, String unit, List<LabelKey> labelKeys) {
-      return new NoopDerivedDoubleGauge(name, description, unit, labelKeys);
-    }
-
     /** Creates a new {@code NoopDerivedDoubleGauge}. */
-    NoopDerivedDoubleGauge(String name, String description, String unit, List<LabelKey> labelKeys) {
-      Utils.checkNotNull(name, "name");
-      Utils.checkNotNull(description, "description");
-      Utils.checkNotNull(unit, "unit");
-      Utils.checkListElementNotNull(Utils.checkNotNull(labelKeys, "labelKeys"), "labelKey");
-      labelKeysSize = labelKeys.size();
+    private NoopDerivedDoubleGauge(int labelKeysSize) {
+      this.labelKeysSize = labelKeysSize;
     }
 
     @Override
@@ -263,37 +359,63 @@ public final class NoopMetrics {
 
     @Override
     public void clear() {}
+
+    private static final class NoopBuilder implements NoopDerivedDoubleGauge.Builder {
+      private int labelKeysSize = 0;
+
+      @Override
+      public Builder setDescription(String description) {
+        Utils.checkNotNull(description, "description");
+        return this;
+      }
+
+      @Override
+      public Builder setUnit(String unit) {
+        Utils.checkNotNull(unit, "unit");
+        return this;
+      }
+
+      @Override
+      public Builder setLabelKeys(List<LabelKey> labelKeys) {
+        Utils.checkListElementNotNull(Utils.checkNotNull(labelKeys, "labelKeys"), "labelKey");
+        labelKeysSize = labelKeys.size();
+        return this;
+      }
+
+      @Override
+      public Builder setConstantLabels(Map<LabelKey, LabelValue> constantLabels) {
+        Utils.checkMapElementNotNull(
+            Utils.checkNotNull(constantLabels, "constantLabels"), "constantLabel");
+        return this;
+      }
+
+      @Override
+      public DerivedDoubleGauge build() {
+        return new NoopDerivedDoubleGauge(labelKeysSize);
+      }
+    }
   }
 
   /** No-op implementations of DoubleCumulative class. */
-  private static final class NoopDoubleCumulative extends DoubleCumulative {
+  private static final class NoopDoubleCumulative implements DoubleCumulative {
     private final int labelKeysSize;
 
-    static NoopDoubleCumulative create(
-        String name, String description, String unit, List<LabelKey> labelKeys) {
-      return new NoopDoubleCumulative(name, description, unit, labelKeys);
-    }
-
-    /** Creates a new {@code NoopDoublePoint}. */
-    NoopDoubleCumulative(String name, String description, String unit, List<LabelKey> labelKeys) {
-      Utils.checkNotNull(name, "name");
-      Utils.checkNotNull(description, "description");
-      Utils.checkNotNull(unit, "unit");
-      Utils.checkListElementNotNull(Utils.checkNotNull(labelKeys, "labelKeys"), "labelKey");
-      labelKeysSize = labelKeys.size();
+    /** Creates a new {@code NoopTimeSeries}. */
+    private NoopDoubleCumulative(int labelKeysSize) {
+      this.labelKeysSize = labelKeysSize;
     }
 
     @Override
-    public NoopDoublePoint getOrCreateTimeSeries(List<LabelValue> labelValues) {
+    public NoopTimeSeries getOrCreateTimeSeries(List<LabelValue> labelValues) {
       Utils.checkListElementNotNull(Utils.checkNotNull(labelValues, "labelValues"), "labelValue");
       Utils.checkArgument(
           labelKeysSize == labelValues.size(), "Label Keys and Label Values don't have same size.");
-      return NoopDoublePoint.INSTANCE;
+      return NoopTimeSeries.INSTANCE;
     }
 
     @Override
-    public NoopDoublePoint getDefaultTimeSeries() {
-      return NoopDoublePoint.INSTANCE;
+    public NoopTimeSeries getDefaultTimeSeries() {
+      return NoopTimeSeries.INSTANCE;
     }
 
     @Override
@@ -304,34 +426,59 @@ public final class NoopMetrics {
     @Override
     public void clear() {}
 
-    /** No-op implementations of DoublePoint class. */
-    private static final class NoopDoublePoint extends DoublePoint {
-      private static final NoopDoublePoint INSTANCE = new NoopDoublePoint();
+    /** No-op implementations of TimeSeries class. */
+    private static final class NoopTimeSeries implements TimeSeries {
+      private static final NoopTimeSeries INSTANCE = new NoopTimeSeries();
 
-      private NoopDoublePoint() {}
+      private NoopTimeSeries() {}
 
       @Override
       public void add(double delta) {}
     }
+
+    private static final class NoopBuilder implements DoubleCumulative.Builder {
+      private int labelKeysSize = 0;
+
+      @Override
+      public Builder setDescription(String description) {
+        Utils.checkNotNull(description, "description");
+        return this;
+      }
+
+      @Override
+      public Builder setUnit(String unit) {
+        Utils.checkNotNull(unit, "unit");
+        return this;
+      }
+
+      @Override
+      public Builder setLabelKeys(List<LabelKey> labelKeys) {
+        Utils.checkListElementNotNull(Utils.checkNotNull(labelKeys, "labelKeys"), "labelKey");
+        labelKeysSize = labelKeys.size();
+        return this;
+      }
+
+      @Override
+      public Builder setConstantLabels(Map<LabelKey, LabelValue> constantLabels) {
+        Utils.checkMapElementNotNull(
+            Utils.checkNotNull(constantLabels, "constantLabels"), "constantLabel");
+        return this;
+      }
+
+      @Override
+      public DoubleCumulative build() {
+        return new NoopDoubleCumulative(labelKeysSize);
+      }
+    }
   }
 
   /** No-op implementations of DerivedDoubleCumulative class. */
-  private static final class NoopDerivedDoubleCumulative extends DerivedDoubleCumulative {
+  private static final class NoopDerivedDoubleCumulative implements DerivedDoubleCumulative {
     private final int labelKeysSize;
 
-    static NoopDerivedDoubleCumulative create(
-        String name, String description, String unit, List<LabelKey> labelKeys) {
-      return new NoopDerivedDoubleCumulative(name, description, unit, labelKeys);
-    }
-
     /** Creates a new {@code NoopDerivedDoubleCumulative}. */
-    NoopDerivedDoubleCumulative(
-        String name, String description, String unit, List<LabelKey> labelKeys) {
-      Utils.checkNotNull(name, "name");
-      Utils.checkNotNull(description, "description");
-      Utils.checkNotNull(unit, "unit");
-      Utils.checkListElementNotNull(Utils.checkNotNull(labelKeys, "labelKeys"), "labelKey");
-      labelKeysSize = labelKeys.size();
+    private NoopDerivedDoubleCumulative(int labelKeysSize) {
+      this.labelKeysSize = labelKeysSize;
     }
 
     @Override
@@ -350,5 +497,178 @@ public final class NoopMetrics {
 
     @Override
     public void clear() {}
+
+    private static final class NoopBuilder implements DerivedDoubleCumulative.Builder {
+      private int labelKeysSize = 0;
+
+      @Override
+      public Builder setDescription(String description) {
+        Utils.checkNotNull(description, "description");
+        return this;
+      }
+
+      @Override
+      public Builder setUnit(String unit) {
+        Utils.checkNotNull(unit, "unit");
+        return this;
+      }
+
+      @Override
+      public Builder setLabelKeys(List<LabelKey> labelKeys) {
+        Utils.checkListElementNotNull(Utils.checkNotNull(labelKeys, "labelKeys"), "labelKey");
+        labelKeysSize = labelKeys.size();
+        return this;
+      }
+
+      @Override
+      public Builder setConstantLabels(Map<LabelKey, LabelValue> constantLabels) {
+        Utils.checkMapElementNotNull(
+            Utils.checkNotNull(constantLabels, "constantLabels"), "constantLabel");
+        return this;
+      }
+
+      @Override
+      public DerivedDoubleCumulative build() {
+        return new NoopDerivedDoubleCumulative(labelKeysSize);
+      }
+    }
+  }
+
+  /** No-op implementations of LongCumulative class. */
+  private static final class NoopLongCumulative implements LongCumulative {
+    private final int labelKeysSize;
+
+    /** Creates a new {@code NoopTimeSeries}. */
+    private NoopLongCumulative(int labelKeysSize) {
+      this.labelKeysSize = labelKeysSize;
+    }
+
+    @Override
+    public NoopTimeSeries getOrCreateTimeSeries(List<LabelValue> labelValues) {
+      Utils.checkListElementNotNull(Utils.checkNotNull(labelValues, "labelValues"), "labelValue");
+      Utils.checkArgument(
+          labelKeysSize == labelValues.size(), "Label Keys and Label Values don't have same size.");
+      return NoopTimeSeries.INSTANCE;
+    }
+
+    @Override
+    public NoopTimeSeries getDefaultTimeSeries() {
+      return NoopTimeSeries.INSTANCE;
+    }
+
+    @Override
+    public void removeTimeSeries(List<LabelValue> labelValues) {
+      Utils.checkNotNull(labelValues, "labelValues");
+    }
+
+    @Override
+    public void clear() {}
+
+    /** No-op implementations of TimeSeries class. */
+    private static final class NoopTimeSeries implements TimeSeries {
+      private static final NoopTimeSeries INSTANCE = new NoopTimeSeries();
+
+      private NoopTimeSeries() {}
+
+      @Override
+      public void add(long delta) {}
+    }
+
+    private static final class NoopBuilder implements LongCumulative.Builder {
+      private int labelKeysSize = 0;
+
+      @Override
+      public Builder setDescription(String description) {
+        Utils.checkNotNull(description, "description");
+        return this;
+      }
+
+      @Override
+      public Builder setUnit(String unit) {
+        Utils.checkNotNull(unit, "unit");
+        return this;
+      }
+
+      @Override
+      public Builder setLabelKeys(List<LabelKey> labelKeys) {
+        Utils.checkListElementNotNull(Utils.checkNotNull(labelKeys, "labelKeys"), "labelKey");
+        labelKeysSize = labelKeys.size();
+        return this;
+      }
+
+      @Override
+      public Builder setConstantLabels(Map<LabelKey, LabelValue> constantLabels) {
+        Utils.checkMapElementNotNull(
+            Utils.checkNotNull(constantLabels, "constantLabels"), "constantLabel");
+        return this;
+      }
+
+      @Override
+      public LongCumulative build() {
+        return new NoopLongCumulative(labelKeysSize);
+      }
+    }
+  }
+
+  /** No-op implementations of DerivedLongCumulative class. */
+  private static final class NoopDerivedLongCumulative implements DerivedLongCumulative {
+    private final int labelKeysSize;
+
+    /** Creates a new {@code NoopDerivedLongCumulative}. */
+    NoopDerivedLongCumulative(int labelKeysSize) {
+      this.labelKeysSize = labelKeysSize;
+    }
+
+    @Override
+    public <T> void createTimeSeries(
+        List<LabelValue> labelValues, T obj, ToLongFunction<T> function) {
+      Utils.checkListElementNotNull(Utils.checkNotNull(labelValues, "labelValues"), "labelValue");
+      Utils.checkArgument(
+          labelKeysSize == labelValues.size(), "Label Keys and Label Values don't have same size.");
+      Utils.checkNotNull(function, "function");
+    }
+
+    @Override
+    public void removeTimeSeries(List<LabelValue> labelValues) {
+      Utils.checkNotNull(labelValues, "labelValues");
+    }
+
+    @Override
+    public void clear() {}
+
+    private static final class NoopBuilder implements DerivedLongCumulative.Builder {
+      private int labelKeysSize = 0;
+
+      @Override
+      public Builder setDescription(String description) {
+        Utils.checkNotNull(description, "description");
+        return this;
+      }
+
+      @Override
+      public Builder setUnit(String unit) {
+        Utils.checkNotNull(unit, "unit");
+        return this;
+      }
+
+      @Override
+      public Builder setLabelKeys(List<LabelKey> labelKeys) {
+        Utils.checkListElementNotNull(Utils.checkNotNull(labelKeys, "labelKeys"), "labelKey");
+        labelKeysSize = labelKeys.size();
+        return this;
+      }
+
+      @Override
+      public Builder setConstantLabels(Map<LabelKey, LabelValue> constantLabels) {
+        Utils.checkMapElementNotNull(
+            Utils.checkNotNull(constantLabels, "constantLabels"), "constantLabel");
+        return this;
+      }
+
+      @Override
+      public DerivedLongCumulative build() {
+        return new NoopDerivedLongCumulative(labelKeysSize);
+      }
+    }
   }
 }

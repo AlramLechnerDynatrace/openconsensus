@@ -28,7 +28,8 @@ import javax.annotation.concurrent.ThreadSafe;
  * <pre>{@code
  * class YourClass {
  *
- *   private static final MetricRegistry metricRegistry = Metrics.getMetricRegistry();
+ *   private static final Meter meter = Metrics.getMeter();
+ *   private static final MetricRegistry metricRegistry = meter.metricRegistryBuilder().build();
  *
  *   List<LabelKey> labelKeys = Arrays.asList(LabelKey.create("Name", "desc"));
  *
@@ -36,7 +37,7 @@ import javax.annotation.concurrent.ThreadSafe;
  *                       "Pending jobs", "1", labelKeys);
  *
  *   // It is recommended to keep a reference of a point for manual operations.
- *   DoublePoint defaultPoint = gauge.getDefaultTimeSeries();
+ *   DoubleGauge.TimeSeries defaultTimeSeries = gauge.getDefaultTimeSeries();
  *
  *   void doWork() {
  *      // Your code here.
@@ -51,7 +52,8 @@ import javax.annotation.concurrent.ThreadSafe;
  * <pre>{@code
  * class YourClass {
  *
- *   private static final MetricRegistry metricRegistry = Metrics.getMetricRegistry();
+ *   private static final Meter meter = Metrics.getMeter();
+ *   private static final MetricRegistry metricRegistry = meter.metricRegistryBuilder().build();
  *
  *   List<LabelKey> labelKeys = Arrays.asList(LabelKey.create("Name", "desc"));
  *   List<LabelValue> labelValues = Arrays.asList(LabelValue.create("Inbound"));
@@ -60,7 +62,7 @@ import javax.annotation.concurrent.ThreadSafe;
  *                       "Pending jobs", "1", labelKeys);
  *
  *   // It is recommended to keep a reference of a point for manual operations.
- *   DoublePoint inboundPoint = gauge.getOrCreateTimeSeries(labelValues);
+ *   DoubleGauge.TimeSeries inboundTimeSeries = gauge.getOrCreateTimeSeries(labelValues);
  *
  *   void doSomeWork() {
  *      // Your code here.
@@ -73,68 +75,49 @@ import javax.annotation.concurrent.ThreadSafe;
  * @since 0.1.0
  */
 @ThreadSafe
-public abstract class DoubleGauge {
+public interface DoubleGauge extends Metric {
 
   /**
-   * Creates a {@code TimeSeries} and returns a {@code DoublePoint} if the specified {@code
+   * Creates a {@code TimeSeries} and returns a {@code TimeSeries} if the specified {@code
    * labelValues} is not already associated with this gauge, else returns an existing {@code
-   * DoublePoint}.
+   * TimeSeries}.
    *
-   * <p>It is recommended to keep a reference to the DoublePoint instead of always calling this
+   * <p>It is recommended to keep a reference to the TimeSeries instead of always calling this
    * method for manual operations.
    *
    * @param labelValues the list of label values. The number of label values must be the same to
-   *     that of the label keys passed to {@link MetricRegistry#addDoubleGauge}.
-   * @return a {@code DoublePoint} the value of single gauge.
+   *     that of the label keys passed to {@link Builder#setLabelKeys(List)}.
+   * @return a {@code TimeSeries} the value of single gauge.
    * @throws NullPointerException if {@code labelValues} is null OR any element of {@code
    *     labelValues} is null.
    * @throws IllegalArgumentException if number of {@code labelValues}s are not equal to the label
    *     keys.
    * @since 0.1.0
    */
-  public abstract DoublePoint getOrCreateTimeSeries(List<LabelValue> labelValues);
+  TimeSeries getOrCreateTimeSeries(List<LabelValue> labelValues);
 
   /**
-   * Returns a {@code DoublePoint} for a gauge with all labels not set, or default labels.
+   * Returns a {@code TimeSeries} for a gauge with all labels not set, or default labels.
    *
-   * @return a {@code DoublePoint} for a gauge with all labels not set, or default labels.
+   * @return a {@code TimeSeries} for a gauge with all labels not set, or default labels.
    * @since 0.1.0
    */
-  public abstract DoublePoint getDefaultTimeSeries();
+  TimeSeries getDefaultTimeSeries();
 
   /**
-   * Removes the {@code TimeSeries} from the gauge metric, if it is present. i.e. references to
-   * previous {@code DoublePoint} objects are invalid (not part of the metric).
-   *
-   * @param labelValues the list of label values.
-   * @throws NullPointerException if {@code labelValues} is null or any element of {@code
-   *     labelValues} is null.
-   * @since 0.1.0
-   */
-  public abstract void removeTimeSeries(List<LabelValue> labelValues);
-
-  /**
-   * Removes all {@code TimeSeries} from the gauge metric. i.e. references to all previous {@code
-   * DoublePoint} objects are invalid (not part of the metric).
+   * A {@code TimeSeries} for a {@code DoubleGauge}.
    *
    * @since 0.1.0
    */
-  public abstract void clear();
-
-  /**
-   * The value of a single point in the Gauge.TimeSeries.
-   *
-   * @since 0.1.0
-   */
-  public abstract static class DoublePoint {
+  interface TimeSeries {
 
     /**
      * Adds the given value to the current value. The values can be negative.
      *
-     * @param amt the value to add
+     * @param amt the value to add.
      * @since 0.1.0
      */
-    public abstract void add(double amt);
+    void add(double amt);
 
     /**
      * Sets the given value.
@@ -142,6 +125,9 @@ public abstract class DoubleGauge {
      * @param val the new value.
      * @since 0.1.0
      */
-    public abstract void set(double val);
+    void set(double val);
   }
+
+  /** Builder class for {@link DerivedLongGauge}. */
+  interface Builder extends Metric.Builder<Builder, DoubleGauge> {}
 }
